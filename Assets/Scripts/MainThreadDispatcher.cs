@@ -7,69 +7,81 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
  
 public class MainThreadDispatcher : MonoBehaviour
 {
-	public static void Enqueue(Action action)
-	{
-		if (action == null)
-		{
-			throw new ArgumentNullException();
-		}
-		lock (locker)
-		{
-			nextActions.Add(action);
-		}
-	}
-	 
-	public static void Enqueue<T>(Action<T> action, T parameter)
-	{
-		if (action == null)
-		{
-			throw new ArgumentNullException();
-		}
-		Enqueue(() => action(parameter));
-	}
-	 
-	public static void Enqueue(IEnumerator coroutine)
-	{
-		if (coroutine == null)
-		{
-			throw new ArgumentNullException();
-		}
-		Enqueue(() => instance.StartCoroutine(coroutine));
-	}
- 
-	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-	private static void Initialize()
-	{
-		if (instance == null)
-		{
-			instance = new GameObject(nameof(MainThreadDispatcher)).AddComponent<MainThreadDispatcher>();
-			DontDestroyOnLoad(instance.gameObject);
-		}
-	}       
-	 
-	private void Update()
-	{
-		// Use the double buffering pattern. It avoids deadlocks and reduces idle time.
-		lock (locker)
-		{
-			var temporary = currentActions;
-			currentActions = nextActions;
-			nextActions = temporary;
-		}
-		 
-		foreach (var action in currentActions)
-		{
-			action();
-		}
-		currentActions.Clear();
-	}
-	 
-	private static MainThreadDispatcher instance;
-	private static List<Action> nextActions = new List<Action>();
-	private static List<Action> currentActions = new List<Action>();
-	private static object locker = new object();
+    public static void Enqueue(Action action)
+    {
+        if (action == null)
+        {
+            throw new ArgumentNullException();
+        }
+        lock (s_locker)
+        {
+            s_nextActions.Enqueue(action);
+        }
+    }
+     
+    public static void Enqueue<T>(Action<T> action, T parameter)
+    {
+        if (action == null)
+        {
+            throw new ArgumentNullException();
+        }
+        Enqueue(() => action(parameter));
+    }
+     
+    public static void Enqueue(IEnumerator coroutine)
+    {
+        if (coroutine == null)
+        {
+            throw new ArgumentNullException();
+        }
+        Enqueue(() => s_instance.StartCoroutine(coroutine));
+    }
+
+    public static void RunAsynchronously(Action action)
+    {
+        ThreadPool.QueueUserWorkItem(x => action());
+    }
+
+    public static void RunAsynchronously(Action<object> action, object state)
+    {
+        ThreadPool.QueueUserWorkItem(x => action(x), state);
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void Initialize()
+    {
+        if (s_instance == null)
+        {
+            var gameObject = new GameObject(nameof(MainThreadDispatcher));
+            DontDestroyOnLoad(gameObject);
+            s_instance = gameObject.AddComponent<MainThreadDispatcher>();
+        }
+    }       
+     
+    private void Update()
+    {
+        // Use the double buffering pattern. It avoids deadlocks and reduces idle time.
+        lock (s_locker)
+        {
+            var temporary = s_currentActions;
+            s_currentActions = s_nextActions;
+            s_nextActions = temporary;
+        }
+
+        while (s_currentActions.Count > 0)
+        {
+            var action = s_currentActions.Dequeue();
+            action();
+        }
+    }
+     
+    private static MainThreadDispatcher s_instance;
+    private static Queue<Action> s_nextActions = new Queue<Action>();
+    private static Queue<Action> s_currentActions = new Queue<Action>();
+    private static object s_locker = new object();
 }
