@@ -68,9 +68,9 @@ public class MainThreadDispatcher : MonoBehaviour
         // Use the double buffering pattern. It avoids deadlocks and reduces idle time.
         lock (s_locker)
         {
-            var temporary = s_currentActions;
+            var temporaryActions = s_currentActions;
             s_currentActions = s_nextActions;
-            s_nextActions = temporary;
+            s_nextActions = temporaryActions;
         }
 
         while (s_currentActions.Count > 0)
