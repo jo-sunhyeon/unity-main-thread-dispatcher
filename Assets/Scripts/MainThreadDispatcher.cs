@@ -7,7 +7,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
+using System.Reflection;
 using UnityEngine;
  
 public class MainThreadDispatcher : MonoBehaviour
@@ -42,16 +42,6 @@ public class MainThreadDispatcher : MonoBehaviour
         Enqueue(() => s_instance.StartCoroutine(coroutine));
     }
 
-    public static void RunAsynchronously(Action action)
-    {
-        ThreadPool.QueueUserWorkItem(x => action());
-    }
-
-    public static void RunAsynchronously(Action<object> action, object state)
-    {
-        ThreadPool.QueueUserWorkItem(x => action(x), state);
-    }
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
@@ -76,10 +66,29 @@ public class MainThreadDispatcher : MonoBehaviour
         while (s_currentActions.Count > 0)
         {
             var action = s_currentActions.Dequeue();
-            action();
+            Do(action);
         }
     }
-     
+
+    private void Do(Action action)
+    {
+        // If Target is destroyed, then do nothing.
+        if (action.Target == null)
+        {
+            MethodInfo methodInfo = action.Method;
+            if (methodInfo == null || !methodInfo.IsStatic)
+            {
+                return;
+            }
+        }
+        if (action.Target as UnityEngine.Object == null)
+        {
+            return;
+        }
+
+        action();
+    }
+
     private static MainThreadDispatcher s_instance;
     private static Queue<Action> s_nextActions = new Queue<Action>();
     private static Queue<Action> s_currentActions = new Queue<Action>();
