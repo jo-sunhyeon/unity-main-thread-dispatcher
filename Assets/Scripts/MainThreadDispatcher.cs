@@ -70,7 +70,7 @@ public class MainThreadDispatcher : MonoBehaviour
         }
     }
 
-    private void Do(Action action)
+    private static void Do(Action action)
     {
         // If Target is destroyed, then do nothing.
         if (action.Target == null)
