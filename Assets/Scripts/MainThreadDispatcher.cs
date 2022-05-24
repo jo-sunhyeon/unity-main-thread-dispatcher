@@ -75,7 +75,7 @@ public class MainThreadDispatcher : MonoBehaviour
         // If Target is destroyed, then do nothing.
         if (action.Target == null)
         {
-            MethodInfo methodInfo = action.Method;
+            var methodInfo = action.Method;
             if (methodInfo == null || !methodInfo.IsStatic)
             {
                 return;
