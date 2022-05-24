@@ -55,7 +55,7 @@ public class MainThreadDispatcher : MonoBehaviour
      
     private void Update()
     {
-        // Use the double buffering pattern. It avoids deadlocks and reduces idle time.
+        // Use the double buffering pattern. Because it avoids deadlocks and reduces idle time.
         lock (s_locker)
         {
             var temporaryActions = s_currentActions;
@@ -72,7 +72,7 @@ public class MainThreadDispatcher : MonoBehaviour
 
     private static void Do(Action action)
     {
-        // If Target is destroyed, then do nothing.
+        // Prevent access to the destroyed non-static target.
         if (action.Target == null)
         {
             var methodInfo = action.Method;
