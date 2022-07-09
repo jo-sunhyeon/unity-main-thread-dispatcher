@@ -18,9 +18,9 @@ public class MainThreadDispatcher : MonoBehaviour
         {
             throw new ArgumentNullException();
         }
-        lock (s_locker)
+        lock (locker)
         {
-            s_nextActions.Enqueue(action);
+            nextActions.Enqueue(action);
         }
     }
      
@@ -39,33 +39,33 @@ public class MainThreadDispatcher : MonoBehaviour
         {
             throw new ArgumentNullException();
         }
-        Enqueue(() => s_instance.StartCoroutine(coroutine));
+        Enqueue(() => instance.StartCoroutine(coroutine));
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
-        if (s_instance == null)
+        if (instance == null)
         {
             var gameObject = new GameObject(nameof(MainThreadDispatcher));
             DontDestroyOnLoad(gameObject);
-            s_instance = gameObject.AddComponent<MainThreadDispatcher>();
+            instance = gameObject.AddComponent<MainThreadDispatcher>();
         }
     }       
      
     private void Update()
     {
         // Use the double buffering pattern. Because it avoids deadlocks and reduces idle time.
-        lock (s_locker)
+        lock (locker)
         {
-            var temporaryActions = s_currentActions;
-            s_currentActions = s_nextActions;
-            s_nextActions = temporaryActions;
+            var temporaryActions = currentActions;
+            currentActions = nextActions;
+            nextActions = temporaryActions;
         }
 
-        while (s_currentActions.Count > 0)
+        while (currentActions.Count > 0)
         {
-            var action = s_currentActions.Dequeue();
+            var action = currentActions.Dequeue();
             Do(action);
         }
     }
@@ -89,8 +89,8 @@ public class MainThreadDispatcher : MonoBehaviour
         action();
     }
 
-    private static MainThreadDispatcher s_instance;
-    private static Queue<Action> s_nextActions = new Queue<Action>();
-    private static Queue<Action> s_currentActions = new Queue<Action>();
-    private static object s_locker = new object();
+    private static MainThreadDispatcher instance;
+    private static Queue<Action> nextActions = new Queue<Action>();
+    private static Queue<Action> currentActions = new Queue<Action>();
+    private static object locker = new object();
 }
