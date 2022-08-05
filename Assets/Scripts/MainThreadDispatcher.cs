@@ -47,7 +47,7 @@ public class MainThreadDispatcher : MonoBehaviour
     {
         if (instance == null)
         {
-            var gameObject = new GameObject(nameof(MainThreadDispatcher));
+            GameObject gameObject = new GameObject(nameof(MainThreadDispatcher));
             DontDestroyOnLoad(gameObject);
             instance = gameObject.AddComponent<MainThreadDispatcher>();
         }
@@ -58,14 +58,14 @@ public class MainThreadDispatcher : MonoBehaviour
         // Use the double buffering pattern. Because it avoids deadlocks and reduces idle time.
         lock (locker)
         {
-            var temporaryActions = currentActions;
+            Queue<Action> temporaryActions = currentActions;
             currentActions = nextActions;
             nextActions = temporaryActions;
         }
 
         while (currentActions.Count > 0)
         {
-            var action = currentActions.Dequeue();
+            Action action = currentActions.Dequeue();
             Do(action);
         }
     }
@@ -75,7 +75,7 @@ public class MainThreadDispatcher : MonoBehaviour
         // Prevent access to the destroyed non-static target.
         if (action.Target == null)
         {
-            var methodInfo = action.Method;
+            MethodInfo methodInfo = action.Method;
             if (methodInfo == null || !methodInfo.IsStatic)
             {
                 return;
