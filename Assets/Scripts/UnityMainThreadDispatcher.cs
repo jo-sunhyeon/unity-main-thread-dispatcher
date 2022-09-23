@@ -21,13 +21,22 @@ public class UnityMainThreadDispatcher : MonoBehaviour
 		implementation.Enqueue(action);
     }
      
-    public static void Enqueue<T>(Action<T> action, T parameter)
+    public static void Enqueue<T1>(Action<T1> action, T1 parameter1)
     {
         if (action == null)
         {
             throw new ArgumentNullException();
         }
-		implementation.Enqueue(() => action(parameter));
+		implementation.Enqueue(() => action(parameter1));
+    }
+     
+    public static void Enqueue<T1, T2>(Action<T1, T2> action, T1 parameter1, T2 parameter2)
+    {
+        if (action == null)
+        {
+            throw new ArgumentNullException();
+        }
+		implementation.Enqueue(() => action(parameter1, parameter2));
     }
      
     public static void Enqueue(IEnumerator coroutine)
