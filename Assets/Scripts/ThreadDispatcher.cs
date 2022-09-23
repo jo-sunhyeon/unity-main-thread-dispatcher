@@ -51,15 +51,10 @@ public class ThreadDispatcher
                 return;
             }
         }
-        if (canDoAction != null && !canDoAction())
-        {
-            return;
-        }
 
         action();
     }
 	
-	public Action canDoAction;
     private Queue<Action> nextActions = new Queue<Action>();
     private Queue<Action> currentActions = new Queue<Action>();
     private object locker = new object();

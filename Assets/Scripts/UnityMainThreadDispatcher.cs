@@ -53,10 +53,9 @@ public class UnityMainThreadDispatcher : MonoBehaviour
     {
         if (instance == null)
         {
-            GameObject gameObject = new GameObject(nameof(MainThreadDispatcher));
+            GameObject gameObject = new GameObject(nameof(UnityMainThreadDispatcher));
             DontDestroyOnLoad(gameObject);
-            instance = gameObject.AddComponent<MainThreadDispatcher>();
-			instance.canDoAction = action => action.Target as UnityEngine.Object != null;
+            instance = gameObject.AddComponent<UnityMainThreadDispatcher>();
         }
     }       
      
@@ -65,6 +64,6 @@ public class UnityMainThreadDispatcher : MonoBehaviour
 		implementation.Update();
     }
 
-	private static ThreadDispatcher implementation;
+	private static ThreadDispatcher implementation = new ThreadDispatcher();
     private static UnityMainThreadDispatcher instance;
 }
