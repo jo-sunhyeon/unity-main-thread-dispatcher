@@ -17,7 +17,7 @@ public class ThreadDispatcher
         {
             throw new ArgumentNullException();
         }
-        lock (locker)
+        lock (_lock)
         {
             nextActions.Enqueue(action);
         }
@@ -26,7 +26,7 @@ public class ThreadDispatcher
     public void Update()
     {
         // Use the double buffering pattern. Because it avoids deadlocks and reduces idle time.
-        lock (locker)
+        lock (_lock)
         {
             Queue<Action> temporaryActions = currentActions;
             currentActions = nextActions;
@@ -57,5 +57,5 @@ public class ThreadDispatcher
 	
     private Queue<Action> nextActions = new Queue<Action>();
     private Queue<Action> currentActions = new Queue<Action>();
-    private object locker = new object();
+    private object _lock = new object();
 }
